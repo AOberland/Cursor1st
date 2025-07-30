@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌊 Tsunami-Tide Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .status-item {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .status-all-clear {
+            background: #2ecc71;
+            color: white;
+        }
+
+        .status-monitoring {
+            background: #f39c12;
+            color: white;
+        }
+
+        .status-alert {
+            background: #e74c3c;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            height: calc(100vh - 120px);
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .panel-title {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+        }
+
+        .alert-card {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(238, 90, 36, 0.3);
+        }
+
+        .tide-card {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3);
+        }
+
+        .correlation-card {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(162, 155, 254, 0.3);
+        }
+
+        .risk-high {
+            background: linear-gradient(135deg, #fd79a8, #e84393) !important;
+        }
+
+        .risk-extreme {
+            background: linear-gradient(135deg, #d63031, #74b9ff) !important;
+            animation: pulse 1.5s infinite;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            font-style: italic;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(52, 152, 219, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            transform: scale(1.1);
+            background: #2980b9;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .status-bar {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-water"></i> Tsunami-Tide Correlation Tracker</h1>
+        <div class="status-bar">
+            <div id="tsunami-status" class="status-item status-monitoring">
+                <i class="fas fa-search"></i> Monitoring Tsunamis
+            </div>
+            <div id="tide-status" class="status-item status-monitoring">
+                <i class="fas fa-chart-line"></i> Tracking Tides
+            </div>
+            <div id="correlation-status" class="status-item status-all-clear">
+                <i class="fas fa-check-circle"></i> All Clear
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="panel">
+            <div class="panel-title">
+                <i class="fas fa-exclamation-triangle"></i> Tsunami Alerts
+            </div>
+            <div id="tsunami-data" class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading tsunami data...</p>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">
+                <i class="fas fa-waves"></i> Tide Conditions
+            </div>
+            <div id="tide-data" class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading tide data...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin: 0 2rem 2rem 2rem;">
+        <div class="panel-title">
+            <i class="fas fa-brain"></i> Risk Analysis & Correlations
+        </div>
+        <div id="correlation-data" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Analyzing correlations...</p>
+        </div>
+    </div>
+
+    <button class="refresh-btn" onclick="refreshAllData()">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <script>
+        // Auto-refresh every 30 seconds
+        let refreshInterval;
+        
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(endpoint);
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleString();
+        }
+
+        function renderTsunamiData(data) {
+            const container = document.getElementById('tsunami-data');
+            
+            if (!data.success) {
+                container.innerHTML = `
+                    <div class="alert-card">
+                        <div class="data-row">
+                            <span><i class="fas fa-info-circle"></i> Status:</span>
+                            <span>${data.status || 'Error'}</span>
+                        </div>
+                        <div class="data-row">
+                            <span>Note:</span>
+                            <span>${data.note || data.error}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (data.alerts && data.alerts.length > 0) {
+                container.innerHTML = data.alerts.map(alert => `
+                    <div class="alert-card">
+                        <div class="data-row">
+                            <span><i class="fas fa-map-marker-alt"></i> Location:</span>
+                            <span>${alert.location}</span>
+                        </div>
+                        <div class="data-row">
+                            <span><i class="fas fa-chart-bar"></i> Magnitude:</span>
+                            <span>${alert.magnitude}</span>
+                        </div>
+                        <div class="data-row">
+                            <span><i class="fas fa-clock"></i> Arrival Time:</span>
+                            <span>${formatTime(alert.arrivalTime)}</span>
+                        </div>
+                        <div class="data-row">
+                            <span><i class="fas fa-warning"></i> Alert Level:</span>
+                            <span>${alert.alertLevel}</span>
+                        </div>
+                        <div class="timestamp">Alert ID: ${alert.id}</div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('tsunami-status').className = 'status-item status-alert';
+                document.getElementById('tsunami-status').innerHTML = '<i class="fas fa-exclamation-triangle"></i> Active Alerts';
+            } else {
+                container.innerHTML = '<div class="no-data"><i class="fas fa-check-circle"></i> No active tsunami alerts</div>';
+                document.getElementById('tsunami-status').className = 'status-item status-all-clear';
+                document.getElementById('tsunami-status').innerHTML = '<i class="fas fa-check-circle"></i> All Clear';
+            }
+        }
+
+        function renderTideData(data) {
+            const container = document.getElementById('tide-data');
+            
+            if (data.tides && data.tides.length > 0) {
+                container.innerHTML = `
+                    <div style="margin-bottom: 1rem; font-weight: bold;">
+                        Station: ${data.station} (${data.count} predictions)
+                    </div>
+                    ${data.tides.slice(0, 6).map(tide => `
+                        <div class="tide-card">
+                            <div class="data-row">
+                                <span><i class="fas fa-clock"></i> Time:</span>
+                                <span>${tide.time}</span>
+                            </div>
+                            <div class="data-row">
+                                <span><i class="fas fa-arrows-alt-v"></i> Height:</span>
+                                <span>${tide.height} ft (${tide.type})</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            } else {
+                container.innerHTML = '<div class="no-data"><i class="fas fa-exclamation-circle"></i> No tide data available</div>';
+            }
+        }
+
+        function renderCorrelationData(data) {
+            const container = document.getElementById('correlation-data');
+            
+            if (data.correlations && data.correlations.length > 0) {
+                container.innerHTML = data.correlations.map(corr => {
+                    const riskClass = corr.riskAssessment.level === 'HIGH' ? 'risk-high' : 
+                                     corr.riskAssessment.level === 'EXTREME' ? 'risk-extreme' : '';
+                    
+                    return `
+                        <div class="correlation-card ${riskClass}">
+                            <div style="font-size: 1.2rem; margin-bottom: 1rem;">
+                                <i class="fas fa-brain"></i> Risk Level: ${corr.riskAssessment.level}
+                            </div>
+                            <div class="data-row">
+                                <span><i class="fas fa-star"></i> Risk Score:</span>
+                                <span>${corr.riskAssessment.score}/100</span>
+                            </div>
+                            <div class="data-row">
+                                <span><i class="fas fa-lightbulb"></i> Recommendation:</span>
+                                <span>${corr.riskAssessment.recommendation}</span>
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                <strong>Risk Factors:</strong>
+                                <ul style="margin-left: 1rem; margin-top: 0.5rem;">
+                                    ${corr.riskAssessment.factors.map(factor => `<li>${factor}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                <strong>Closest Tide Events:</strong>
+                                ${corr.tideConditions.map(tide => `
+                                    <div style="margin: 0.5rem 0; font-size: 0.9rem;">
+                                        ${tide.type} tide: ${tide.height}ft at ${tide.time} (${tide.timeDiff} min from arrival)
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                const highRisk = data.correlations.some(c => ['HIGH', 'EXTREME'].includes(c.riskAssessment.level));
+                document.getElementById('correlation-status').className = highRisk ? 'status-item status-alert' : 'status-item status-all-clear';
+                document.getElementById('correlation-status').innerHTML = highRisk ? 
+                    '<i class="fas fa-exclamation-triangle"></i> High Risk Detected' : 
+                    '<i class="fas fa-check-circle"></i> Low Risk';
+            } else {
+                container.innerHTML = '<div class="no-data"><i class="fas fa-info-circle"></i> No correlations to analyze</div>';
+            }
+        }
+
+        async function refreshAllData() {
+            console.log('🔄 Refreshing all data...');
+            
+            const [tsunamiData, tideData, correlationData] = await Promise.all([
+                fetchData('/api/tsunami/alerts'),
+                fetchData('/api/tide/station/9414290'),
+                fetchData('/api/correlation/analyze')
+            ]);
+
+            renderTsunamiData(tsunamiData);
+            renderTideData(tideData);
+            renderCorrelationData(correlationData);
+            
+            console.log('✅ Data refresh complete');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshAllData();
+            refreshInterval = setInterval(refreshAllData, 30000); // Refresh every 30 seconds
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (refreshInterval) clearInterval(refreshInterval);
+        });
+    </script>
+</body>
+</html>
