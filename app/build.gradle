@@ -54,15 +54,24 @@ configurations.all {
         force 'androidx.core:core:1.12.0'
         force 'androidx.annotation:annotation:1.7.1'
         
-        // Exclude conflicting support libraries
-        exclude group: 'com.android.support'
+        // Force specific versions to avoid conflicts
+        force 'androidx.appcompat:appcompat:1.6.1'
+        force 'androidx.lifecycle:lifecycle-common:2.7.0'
     }
+    
+    // Exclude all support library dependencies to prevent conflicts
+    exclude group: 'com.android.support'
+    exclude group: 'com.android.support', module: 'support-compat'
+    exclude group: 'com.android.support', module: 'support-annotations'
+    exclude group: 'com.android.support', module: 'support-v4'
+    exclude group: 'com.android.support', module: 'support-core-ui'
+    exclude group: 'com.android.support', module: 'support-core-utils'
 }
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     
     // Ensure consistent AndroidX versions to avoid conflicts
