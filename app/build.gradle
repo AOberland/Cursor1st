@@ -61,16 +61,15 @@ dependencies {
     implementation "androidx.camera:camera-lifecycle:${camerax_version}"
     implementation "androidx.camera:camera-video:${camerax_version}"
     implementation "androidx.camera:camera-view:${camerax_version}"
-    implementation "androidx.camera:camera-mlkit-vision:${camerax_version}"
     implementation "androidx.camera:camera-extensions:${camerax_version}"
     
     // TensorFlow Lite
-    implementation 'org.tensorflow:tensorflow-lite:2.14.0'
-    implementation 'org.tensorflow:tensorflow-lite-gpu:2.14.0'
-    implementation 'org.tensorflow:tensorflow-lite-support:0.4.4'
+    implementation 'org.tensorflow:tensorflow-lite:2.13.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.13.0'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.4.3'
     
-    // OpenCV
-    implementation 'org.opencv:opencv-android:4.8.0'
+    // OpenCV (official Maven Central distribution)
+    implementation 'org.opencv:opencv:4.9.0'
     
     // ARCore (optional)
     implementation 'com.google.ar:core:1.40.0'

@@ -124,12 +124,13 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun initializeOpenCV() {
-        if (!OpenCVLoader.initDebug()) {
-            Log.d(TAG, "Internal OpenCV library not found. Using OpenCV Manager for initialization")
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, openCVLoaderCallback)
-        } else {
-            Log.d(TAG, "OpenCV library found inside package. Using it!")
+        // OpenCV 4.9.0+ uses initLocal() for Maven Central distribution
+        if (OpenCVLoader.initLocal()) {
+            Log.d(TAG, "OpenCV loaded successfully")
             openCVLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS)
+        } else {
+            Log.d(TAG, "OpenCV initialization failed, trying async loading")
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, openCVLoaderCallback)
         }
     }
     
@@ -350,10 +351,10 @@ class MainActivity : AppCompatActivity() {
     
     override fun onResume() {
         super.onResume()
-        if (!OpenCVLoader.initDebug()) {
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, openCVLoaderCallback)
-        } else {
+        if (OpenCVLoader.initLocal()) {
             openCVLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS)
+        } else {
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, openCVLoaderCallback)
         }
     }
     
