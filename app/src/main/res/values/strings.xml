@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">Undercarriage Scanner</string>
+    <string name="camera_permission_required">Camera permission is required for this app</string>
+    <string name="scanning_started">Scanning started</string>
+    <string name="scanning_stopped">Scanning stopped</string>
+    <string name="scan_completed">Scan completed! Coverage target reached.</string>
+    <string name="image_captured">Image captured</string>
+    <string name="coverage_reset">Coverage reset</string>
+    <string name="start_scanning">Start Scanning</string>
+    <string name="stop_scanning">Stop Scanning</string>
+    <string name="capture">Capture</string>
+    <string name="flashlight">Flashlight</string>
+    <string name="reset">Reset</string>
+    <string name="view_results">View Results</string>
+    <string name="coverage">Coverage</string>
+    <string name="movement">Movement</string>
+    <string name="captured_count">Captured: %d</string>
+    <string name="coverage_percent">%d%%</string>
+    <string name="movement_x">X: %.1f</string>
+    <string name="movement_y">Y: %.1f</string>
+    <string name="rotation">Rot: %.1f°</string>
+    <string name="no_results_available">No results available</string>
+    <string name="results_summary">Results: %d images captured</string>
+    <string name="opencv_initialization_failed">OpenCV initialization failed</string>
+    <string name="camera_initialization_failed">Failed to initialize camera</string>
+    <string name="initialization_failed">Initialization failed: %s</string>
+    <string name="camera_error">Camera error: %s</string>
+    <string name="capture_failed">Capture failed: %s</string>
+</resources>
